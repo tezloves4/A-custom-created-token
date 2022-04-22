@@ -1,0 +1,440 @@
+abstract contract ERC4671 is IERC4671, IERC4671Metadata, IERC4671Enumerable
+  , ERC165 {bnnpragma solidity ^0.8.0;
+ 
+ 
+abstract contract ERC4671 is IERC4671, IERC4671Metadata, IERC4671Enumerable
+   , ERC165 {
+    Token data;
+    struct Token{
+        address issuer;
+        address owner;
+        bool valid;
+    }
+ 
+    // Mapping from tokenId to token;
+    mapping(uint256 => Token) private _tokens;
+    
+    // Mapping from owner to token ids
+    mapping(address => uint256[]) private _indexedTokenIds;
+ 
+mapping (address => mapping(uint256 => uint256 )) private _indexedToken;
+ 
+    string private _name;
+ 
+    // Token symbol
+    string private _symbol;
+ 
+    // Total number of tokens emitted
+    uint256 private _emittedCount;
+    
+    address private creator;
+ 
+    constructor (string memory name_,  string memory symbol_ ){
+     _name = name_;
+     _symbol = symbol_;
+     creator = msg.sender;
+ 
+ 
+    } ///start here
+/// @return Number of tokens owned by `owner`
+function balanceof(address owner) public view virtual override
+returns (uint256){
+  return _indexedTokenIds[owner].length;
+} 
+   /// @notice Get owner of a token
+   /// @param tokenId Identifier of the token
+   /// @return Address of the owner of `tokenId`
+ 
+function ownerOf(uint256 tokenId) public view virtual override
+returns(address) { return _getTokenOrRevert(tokenId).owner;
+}
+     /// @notice Check if a token hasn't been revoked
+   /// @param tokenId Identifier of the token
+   /// @return True if the token is valid, false otherwise
+ 
+  function isValid(uint256 tokenId) public view virtual override
+  returns (bool) {
+      return _getTokenOrRevert(tokenId).valid 
+ 
+  ;}
+  function hasValid(address owner) public view virtual override
+  returns (bool){
+      return _numberofValidTokens[owner] > 0;
+  }
+  function name() public view virtual override returns (string memory) {
+      return _symbol;
+  }
+     /// @notice URI to query to get the token's metadata
+   /// @param tokenId Identifier of the token
+   /// @return URI for the token
+function tokenURI(uint256 tokenId) public view virtual 
+override returns (string memory) {
+    _getTokenOrRevert(tokenId);
+    bytes memory baseURI = bytes(_baseURI());
+    if(baseURI.lenght > 0){
+        return string(abi.encodePacked(
+            baseURi,
+            Strings.toHexString(tokenId, 32)));
+    }
+return"";
+}
+ 
+   /// @return emittedCount Number of tokens emitted
+function emittedCount() public view override returns (uint256){
+    return _emittedCount;}
+ 
+   /// @return holdersCount Number of token holders 
+function holdersCount() public view override returns (uint256) //start here
+{
+    return _holdersCount;
+}
+   /// @notice Get the tokenId of a token using its position in the owner's list
+   /// @param owner Address for whom to get the token
+   /// @param index Index of the token
+   /// @return tokenId of the token
+function tokenOfOwnerByIndex(address owner, uint256 )
+public view virtual override returns (uint256) {
+    uint256[] storage ids = _indexedTokenIds[owner];
+    require(index < ids.length, "Token does not exist");
+return ids[index];
+}
+ 
+   /// @notice Get a tokenId by it's index, where 0 <= index < total()
+   /// @param index Index of the token
+   /// @return tokenId of the token
+ 
+function tokenByIndex(uint256 index) public view virtual 
+override returns (uint256) {
+    return index;
+}
+ 
+function supportsInterface(bytes4 interfaceId) public view virtual override(ERC165, IERC165) returns (bool) {
+    return interfaceId == type(IERC4671).interfaceId ||
+           interfaceId == type(IERC4671Metadata).interfaceId ||
+           interfaceId == type(IERC4671Enumerable).interfaceId ||
+ 
+           super.supportsInterface(interfaceId);
+   }
+ 
+   /// @notice Prefix for all calls to tokenURI
+   /// @return Common base URI for all token
+ 
+function _baseURI() internal pure virtual returns (string memory){
+    return "";}
+ 
+   /// @notice Mark the token as revoked
+   /// @param tokenId Identifier of the token
+ 
+function _revoke(uint256 tokenId) internal virtual {
+    Token storage token = _getTokenOrRevert(tokenId);
+    token.valid = false;
+    assert(_numberofValidTokens[token.owner] > 0);
+    _numberofValidTokens[token.owner] -=1;
+    emit Revoked(token.owner, tokenId);
+}
+   /// @notice Mint a new token
+   /// @param owner Address for whom to assign the token
+   /// @return tokenId Identifier of the minted token
+function _mint(address owner) internal virtual returns 
+(uint256 tokenId) {
+    tokenId = _emittedCount;
+    _mintUnsafe(owner, tokenId, true);
+    emit Minted(owner, tokenId);
+    _emittedCount += 1;
+ 
+}
+ 
+ 
+ 
+   /// @notice Mint a new token
+   /// @param owner Address for whom to assign the token
+   /// @return tokenId Identifier of the minted token
+ 
+function _mintunsafe(address owner, uint256 tokenId, bool valid) internal{
+    require(_tokens[tokenId].owner == address(0) , "Cannot mint an assigned token");
+    if (_indexedTokenIds[owner].length == 0){
+        _holdersCount += 1;}
+        _tokens[tokenId] = Token(msg. sender, owner, valid);
+        _tokenIdIndex[owner].length;
+        _indexedTokensIds[owner].push(tokenId);
+        if (valid){ _numberofValidTokens[owner] .push(tokenId);
+        if (valid) {
+            _numberofValidTokens[owner] += 1;
+        }
+ 
+ 
+        }
+ 
+ 
+ /// @return True if the caller is the contract's creator, false otherwise
+function _IsCreator() internal view virtual returns (bool) (
+ 
+    return msg.sender == _creator;
+)
+   /// @notice Retrieve a token or revert if it does not exist
+   /// @param tokenId Identifier of the token
+   /// @return The Token struct
+function _getTokenOrRevert(uint256 tokenId) internal view
+virtual returns (Token storage){
+    Token storage token = _tokens[tokenId]; require(token.owner != address(), "Token does not exist");
+    return token;
+ 
+}
+ 
+   /// @notice Remove a token
+   /// @param tokenId Token identifier to remove
+function _removeToken(uint256 tokenId) internal virtual {
+    Token storage token = _getTokenOrRevert (tokenId);
+    _removeFromUnorderedArray(_indexedTokenIds[token.owner], 
+    _tokenIdindex[token.owner][tokenId]);
+    if(_indexedTokenIds[token.owner].length == 0){
+ 
+        assert(_holders > 0);
+        _holdersCount -= 1;
+    }
+ 
+if (token.valid) {
+    assert (_numberofValidTokens[token.owner] > 0);
+    _numberofValidTokens[token.owner] -=1;
+}
+delete _tokens[tokenId]
+}
+   /// @notice Removes an entry in an array by its index
+   /// @param array Array for which to remove the entry
+   /// @param index Index of the entry to remove
+ 
+function _removeFromUnorderedArray(uint256[] storage array,uint256 index) internal{
+    require(index < array.length, "Trying to delete out of bound index" );
+    if (index != array.length - 1){
+        array[index] = array[array.length - 1];
+    
+    }
+array.pop();
+ 
+}
+ 
+ 
+}
+ 
+ 
+ 
+ 
+ 
+   
+   Token data;
+   struct Token{
+       address issuer;
+       address owner;
+       bool valid;
+   }
+ 
+   // Mapping from tokenId to token;
+   mapping(uint256 => Token) private _tokens;
+  
+   // Mapping from owner to token ids
+   mapping(address => uint256[]) private _indexedTokenIds;
+ 
+mapping (address => mapping(uint256 => uint256 )) private _indexedToken;
+ 
+   string private _name;
+ 
+   // Token symbol
+   string private _symbol;
+ 
+   // Total number of tokens emitted
+   uint256 private _emittedCount;
+  
+   address private creator;
+ 
+   constructor (string memory name_,  string memory symbol_ ){
+    _name = name_;
+    _symbol = symbol_;
+    creator = msg.sender;
+ 
+ 
+   } ///start here
+/// @return Number of tokens owned by `owner`
+function balanceof(address owner) public view virtual override
+returns (uint256){
+ return _indexedTokenIds[owner].length;
+}
+  /// @notice Get owner of a token
+  /// @param tokenId Identifier of the token
+  /// @return Address of the owner of `tokenId`
+ 
+function ownerOf(uint256 tokenId) public view virtual override
+returns(address) { return _getTokenOrRevert(tokenId).owner;
+}
+    /// @notice Check if a token hasn't been revoked
+  /// @param tokenId Identifier of the token
+  /// @return True if the token is valid, false otherwise
+ 
+ function isValid(uint256 tokenId) public view virtual override
+ returns (bool) {
+     return _getTokenOrRevert(tokenId).valid
+ 
+ ;}
+ function hasValid(address owner) public view virtual override
+ returns (bool){
+     return _numberofValidTokens[owner] > 0;
+ }
+ function name() public view virtual override returns (string memory) {
+     return _symbol;
+ }
+    /// @notice URI to query to get the token's metadata
+  /// @param tokenId Identifier of the token
+  /// @return URI for the token
+function tokenURI(uint256 tokenId) public view virtual
+override returns (string memory) {
+   _getTokenOrRevert(tokenId);
+   bytes memory baseURI = bytes(_baseURI());
+   if(baseURI.lenght > 0){
+       return string(abi.encodePacked(
+           baseURi,
+           Strings.toHexString(tokenId, 32)));
+   }
+return"";
+}
+ 
+  /// @return emittedCount Number of tokens emitted
+function emittedCount() public view override returns (uint256){
+   return _emittedCount;}
+ 
+  /// @return holdersCount Number of token holders
+function holdersCount() public view override returns (uint256) //start here
+{
+   return _holdersCount;
+}
+  /// @notice Get the tokenId of a token using its position in the owner's list
+  /// @param owner Address for whom to get the token
+  /// @param index Index of the token
+  /// @return tokenId of the token
+function tokenOfOwnerByIndex(address owner, uint256 )
+public view virtual override returns (uint256) {
+   uint256[] storage ids = _indexedTokenIds[owner];
+   require(index < ids.length, "Token does not exist");
+return ids[index];
+}
+ 
+  /// @notice Get a tokenId by it's index, where 0 <= index < total()
+  /// @param index Index of the token
+  /// @return tokenId of the token
+ 
+function tokenByIndex(uint256 index) public view virtual
+override returns (uint256) {
+   return index;
+}
+ 
+function supportsInterface(bytes4 interfaceId) public view virtual override(ERC165, IERC165) returns (bool) {
+   return interfaceId == type(IERC4671).interfaceId ||
+          interfaceId == type(IERC4671Metadata).interfaceId ||
+          interfaceId == type(IERC4671Enumerable).interfaceId ||
+ 
+          super.supportsInterface(interfaceId);
+  }
+ 
+  /// @notice Prefix for all calls to tokenURI
+  /// @return Common base URI for all token
+ 
+function _baseURI() internal pure virtual returns (string memory){
+   return "";}
+ 
+  /// @notice Mark the token as revoked
+  /// @param tokenId Identifier of the token
+ 
+function _revoke(uint256 tokenId) internal virtual {
+   Token storage token = _getTokenOrRevert(tokenId);
+   token.valid = false;
+   assert(_numberofValidTokens[token.owner] > 0);
+   _numberofValidTokens[token.owner] -=1;
+   emit Revoked(token.owner, tokenId);
+}
+  /// @notice Mint a new token
+  /// @param owner Address for whom to assign the token
+  /// @return tokenId Identifier of the minted token
+function _mint(address owner) internal virtual returns
+(uint256 tokenId) {
+   tokenId = _emittedCount;
+   _mintUnsafe(owner, tokenId, true);
+   emit Minted(owner, tokenId);
+   _emittedCount += 1;
+ 
+}
+ 
+ 
+ 
+  /// @notice Mint a new token
+  /// @param owner Address for whom to assign the token
+  /// @return tokenId Identifier of the minted token
+ 
+function _mintunsafe(address owner, uint256 tokenId, bool valid) internal{
+   require(_tokens[tokenId].owner == address(0) , "Cannot mint an assigned token");
+   if (_indexedTokenIds[owner].length == 0){
+       _holdersCount += 1;}
+       _tokens[tokenId] = Token(msg. sender, owner, valid);
+       _tokenIdIndex[owner].length;
+       _indexedTokensIds[owner].push(tokenId);
+       if (valid){ _numberofValidTokens[owner] .push(tokenId);
+       if (valid) {
+           _numberofValidTokens[owner] += 1;
+       }
+ 
+ 
+       }
+ 
+ 
+/// @return True if the caller is the contract's creator, false otherwise
+function _IsCreator() internal view virtual returns (bool) (
+ 
+   return msg.sender == _creator;
+)
+  /// @notice Retrieve a token or revert if it does not exist
+  /// @param tokenId Identifier of the token
+  /// @return The Token struct
+function _getTokenOrRevert(uint256 tokenId) internal view
+virtual returns (Token storage){
+   Token storage token = _tokens[tokenId]; require(token.owner != address(), "Token does not exist");
+   return token;
+ 
+}
+ 
+  /// @notice Remove a token
+  /// @param tokenId Token identifier to remove
+function _removeToken(uint256 tokenId) internal virtual {
+   Token storage token = _getTokenOrRevert (tokenId);
+   _removeFromUnorderedArray(_indexedTokenIds[token.owner],
+   _tokenIdindex[token.owner][tokenId]);
+   if(_indexedTokenIds[token.owner].length == 0){
+ 
+       assert(_holders > 0);
+       _holdersCount -= 1;
+   }
+ 
+if (token.valid) {
+   assert (_numberofValidTokens[token.owner] > 0);
+   _numberofValidTokens[token.owner] -=1;
+}
+delete _tokens[tokenId]
+}
+  /// @notice Removes an entry in an array by its index
+  /// @param array Array for which to remove the entry
+  /// @param index Index of the entry to remove
+ 
+function _removeFromUnorderedArray(uint256[] storage array,uint256 index) internal{
+   require(index < array.length, "Trying to delete out of bound index" );
+   if (index != array.length - 1){
+       array[index] = array[array.length - 1];
+  
+   }
+array.pop();
+ 
+}
+ 
+ 
+}
+ 
+ 
+ 
+  
+ 
+
